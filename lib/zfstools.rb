@@ -16,26 +16,34 @@ def snapshot_property
   "com.sun:auto-snapshot"
 end
 
+def snapshot_period_property
+  "com.sun:auto-snapshot-period"
+end
+
 def snapshot_prefix()
   "zfs-auto-snap"
 end
 
 def snapshot_prefix_interval(interval)
-  snapshot_prefix() + "_#{interval}-"
+  snapshot_prefix() + "_#{interval}"
 end
 
 def snapshot_format
-  '%Y-%m-%d-%Hh%M'
+  '-%Y-%m-%d-%H%M'
 end
 
 ### Get the name of the snapshot to create
 def snapshot_name(interval)
   if $use_utc
-    date = Time.now.utc.strftime(snapshot_format + "U")
+    date = Time.now.utc.strftime(snapshot_format + "Z")
   else
     date = Time.now.strftime(snapshot_format)
   end
-  snapshot_prefix_interval(interval) + date
+  if $periodic_snapname
+    snapshot_prefix_interval(interval) + date
+  else
+    snapshot_prefix() + date
+  end
 end
 
 ### Find which datasets can be recursively snapshotted
@@ -149,9 +157,9 @@ def do_new_snapshots(datasets, interval)
   snapshot_name = snapshot_name(interval)
 
   # Snapshot single
-  Zfs::Snapshot.create_many(snapshot_name, datasets['single'])
+  Zfs::Snapshot.create_many(snapshot_name, datasets['single'], 'interval'=>interval)
   # Snapshot recursive
-  Zfs::Snapshot.create_many(snapshot_name, datasets['recursive'], 'recursive'=>true)
+  Zfs::Snapshot.create_many(snapshot_name, datasets['recursive'], 'interval'=>interval, 'recursive'=>true)
 end
 
 def group_snapshots_into_datasets(snapshots, datasets)
