@@ -6,12 +6,14 @@ module Zfs
   class Snapshot
     @@stale_snapshot_size = false
     attr_reader :name
-    def initialize(name, used=nil)
+    attr_reader :period
+   def initialize(name, used=nil, period=nil)
       @name = name
       @used = used
+      @period = period
     end
 
-    def used
+   def used
       if @used.nil? or @@stale_snapshot_size
         cmd = "zfs get -Hp -o value used " + @name.shellescape
         puts cmd if $debug
@@ -33,13 +35,13 @@ module Zfs
       flags=[]
       flags << "-d 1" if dataset and !options['recursive']
       flags << "-r" if options['recursive']
-      cmd = "zfs list #{flags.join(" ")} -H -t snapshot -o name,used -S name"
+      cmd = "zfs list #{flags.join(" ")} -H -t snapshot -o name,used,"+snapshot_period_property()+" -S name"
       cmd += " " + dataset.shellescape if dataset
       puts cmd if $debug
       IO.popen cmd do |io|
         io.readlines.each do |line|
-          snapshot_name,used = line.chomp.split("\t")
-          snapshots << self.new(snapshot_name, used.to_i)
+         snapshot_name,used,period = line.chomp.split("\t")
+         snapshots << self.new(snapshot_name, used.to_i, period)
         end
       end
       snapshots
@@ -49,6 +51,7 @@ module Zfs
     def self.create(snapshot, options = {})
       flags=[]
       flags << "-r" if options['recursive']
+      flags << "-o " + snapshot_period_property() + "=#{options['interval']}" if options['interval']
       cmd = "zfs snapshot #{flags.join(" ")} "
       if snapshot.kind_of?(Array)
         cmd += snapshot.shelljoin
@@ -131,7 +134,7 @@ module Zfs
           threads << Thread.new do
             self.create("#{dataset.name}@#{snapshot_name}",
                         'recursive' => options['recursive'] || false,
-                        'db' => dataset.db)
+                        'db' => dataset.db, 'interval' => options['interval'])
           end
           threads.last.join unless $use_threads
         end
