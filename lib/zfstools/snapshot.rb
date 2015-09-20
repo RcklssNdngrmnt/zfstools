@@ -7,13 +7,13 @@ module Zfs
     @@stale_snapshot_size = false
     attr_reader :name
     attr_reader :period
-   def initialize(name, used=nil, period=nil)
+    def initialize(name, used=nil, period=nil)
       @name = name
       @used = used
       @period = period
     end
 
-   def used
+    def used
       if @used.nil? or @@stale_snapshot_size
         cmd = "zfs get -Hp -o value used " + @name.shellescape
         puts cmd if $debug
@@ -40,8 +40,8 @@ module Zfs
       puts cmd if $debug
       IO.popen cmd do |io|
         io.readlines.each do |line|
-         snapshot_name,used,period = line.chomp.split("\t")
-         snapshots << self.new(snapshot_name, used.to_i, period)
+          snapshot_name,used,period = line.chomp.split("\t")
+          snapshots << self.new(snapshot_name, used.to_i, period)
         end
       end
       snapshots
