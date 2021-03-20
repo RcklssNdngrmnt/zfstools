@@ -2,6 +2,10 @@
 
 Various scripts for administrating ZFS. Modeled after [time-sliderd](https://web.archive.org/web/20091219060106/http://mail.opensolaris.org/pipermail/zfs-discuss/2009-November/033882.html) and [ZFS Automatic Snapshots](https://web.archive.org/web/20090707205453/http://blogs.sun.com/timf/entry/zfs_automatic_snapshots_0_12) from OpenSolaris
 
+
+NOTE: This fork no longer has much purpose now that Samba supports more flexible snapshot names for Windows Previous Versions.
+Archiving 2021-03-20.
+
 ## Setup
 
 Install the gem.
